@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 style="text-align: center;">Run this test in browser from HTTPS location</h1>
+    <div id="iframe_wrap"></div>
+    <script>
+        // let iframe_wrap;
+        let iframeURL = "https://attestation.id";
+        let iframePointer;
+        let email = 'jean@smarttokenlabs.com';
+        let wallet = 'MetaMask';
+        let address = '0x3B057FD4Ba20D2129b1DD5355CEDE95D4E990ab4';
+
+        async function  postMessageAttestationListener(event) {
+            console.log('postMessageAttestationListener event data: ', event.data);
+        
+            if (typeof event.data.ready !== "undefined" && event.data.ready === true) {
+                let sendData = { force: true };
+
+                if (email) sendData.email = email;
+                if (wallet) sendData.wallet = wallet;
+                if (address) sendData.address = address;
+                console.log('sendData', sendData)
+                iframePointer.contentWindow.postMessage(sendData, iframeURL);
+                return;
+            }
+
+            if (typeof event.data.display !== "undefined") {
+                if (event.data.display === true) {
+                    this.iframe_wrap.style.display = "flex";
+                    
+                } else {
+
+                    if (event.data.error){
+                        console.log("Error received from the iframe: " + event.data.error);
+                    }
+
+                    this.iframe_wrap.style.display = "none";
+                }
+            }
+            if (!event.data?.attestation || !event.data?.requestSecret) {
+                return;
+            }
+
+        }
+
+        window.addEventListener("message", (e) => {
+            if (!iframeURL) return;
+
+            let attestURL = new URL(iframeURL);
+
+            if (e.origin !== attestURL.origin) {
+                return;
+            }
+
+            if (!iframePointer || !iframe_wrap || !iframePointer.contentWindow) {
+                return;
+            }
+            postMessageAttestationListener(e);
+        });
+
+        iframePointer = document.createElement("iframe");
+        iframePointer.setAttribute("allow", "clipboard-read");
+
+        iframePointer.src = iframeURL ?? "";
+        iframePointer.style.width = "600px";
+        iframePointer.style.height = "600px";
+        iframePointer.style.maxWidth = "100%";
+        iframePointer.style.background = "#fff";
+
+        iframe_wrap.setAttribute(
+            "style",
+            "width:100%;min-height: 100vh; position: fixed; align-items: center; justify-content: center;display: none;top: 0; left: 0; background: #fffa"
+        );
+        iframe_wrap.appendChild(iframePointer);
+    </script>
+    
+</body>
+</html>
